@@ -9,7 +9,8 @@ authors:
     affiliation: "Department of Critical Care Medicine, Zhengzhou Central Hospital Affiliated to Zhengzhou University"
 repository-code: "https://github.com/zs20001001/ARDS-72h-prognosis-model"
 license: MIT
-version: 1.0.0
+doi: "10.5281/zenodo.23938387"
+version: 1.0.1
 date-released: "2026-11-04"
 keywords:
   - acute respiratory distress syndrome

@@ -1,5 +1,7 @@
 # A 72-Hour Machine Learning Prognostic Model for ARDS Patients Requiring Invasive Mechanical Ventilation
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23938386.svg)](https://doi.org/10.5281/zenodo.23938386)
+
 Analysis code accompanying the manuscript:
 
 > **Development and External Validation of a Machine Learning-Based 72-Hour Prognostic Model for
@@ -190,6 +192,28 @@ control by `.gitignore`.
 ## License
 
 Released under the [MIT License](LICENSE).
+
+## Citation
+
+If you use this code, please cite the associated article and this archived release.
+
+- **This release (v1.0.1):** https://doi.org/10.5281/zenodo.23938387
+- **All versions:** https://doi.org/10.5281/zenodo.23938386
+
+BibTeX for the archived software:
+
+```bibtex
+@software{zhao_ards_72h_prognosis_2026,
+  author    = {Zhao, Sheng},
+  title     = {A 72-Hour Machine Learning Prognostic Model for {ARDS} Patients
+               Requiring Invasive Mechanical Ventilation},
+  year      = {2026},
+  publisher = {Zenodo},
+  version   = {v1.0.1},
+  doi       = {10.5281/zenodo.23938387},
+  url       = {https://doi.org/10.5281/zenodo.23938387}
+}
+```
 
 ## Contact
 
