@@ -59,6 +59,7 @@ Regression, Support Vector Machine, Gaussian Naive Bayes.
 │       ├── fit_gaussian_nb.py
 │       ├── fit_lightgbm.py
 │       ├── fit_logistic_regression.py
+│       ├── fit_random_forest.py
 │       ├── fit_svm.py
 │       └── fit_xgboost.py
 ├── data/
@@ -144,6 +145,7 @@ The hyperparameters selected in Step 2 are hard-coded at the top of each script
 python python/final_models/fit_catboost.py
 python python/final_models/fit_xgboost.py
 python python/final_models/fit_lightgbm.py
+python python/final_models/fit_random_forest.py
 python python/final_models/fit_decision_tree.py
 python python/final_models/fit_logistic_regression.py
 python python/final_models/fit_svm.py
@@ -174,8 +176,9 @@ control by `.gitignore`.
   predictor columns directly. The headers themselves contain no patient identifiers.
 - **Day-1 PEEP naming.** The source column is `peep` rather than `d1_peep`; both refer to the same
   day-1 measurement used in the paper.
-- **Random Forest** was tuned in Step 2 only; its ranking table is reported in the paper, but no
-  serialised final model is exported.
+- **Random Forest** was tuned over a deliberately narrow pool (`n_estimators` 100/300/400/600,
+  `max_depth` 8/10, `min_samples_split` 2/5, `min_samples_leaf` 1/2); the selected configuration was
+  100/8/2/2 with `max_features = 4`, `criterion = "gini"`, `bootstrap = True`.
 - **File naming.** Scripts are deliberately not named `catboost.py`, `xgboost.py` or `lightgbm.py`:
   such a file sits first on `sys.path` when run directly and would shadow the library of the same
   name. Keep the current suffixes if you rename anything.

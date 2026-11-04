@@ -7,7 +7,7 @@ authors:
     given-names: Sheng
     email: 1640472493@qq.com
     affiliation: "Department of Critical Care Medicine, Zhengzhou Central Hospital Affiliated to Zhengzhou University"
-repository-code: "https://github.com/REPLACE-WITH-YOUR-USERNAME/ARDS-72h-prognosis-model"
+repository-code: "https://github.com/zs20001001/ARDS-72h-prognosis-model"
 license: MIT
 version: 1.0.0
 date-released: "2026-11-04"
