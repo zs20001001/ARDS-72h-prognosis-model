@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated article and this repository."
+title: "A 72-Hour Machine Learning Prognostic Model for ARDS Patients Requiring Invasive Mechanical Ventilation"
+type: software
+authors:
+  - family-names: Zhao
+    given-names: Sheng
+    email: 1640472493@qq.com
+    affiliation: "Department of Critical Care Medicine, Zhengzhou Central Hospital Affiliated to Zhengzhou University"
+repository-code: "https://github.com/REPLACE-WITH-YOUR-USERNAME/ARDS-72h-prognosis-model"
+license: MIT
+version: 1.0.0
+date-released: "2026-11-04"
+keywords:
+  - acute respiratory distress syndrome
+  - invasive mechanical ventilation
+  - machine learning
+  - prognostic model
+  - Boruta
+  - LASSO
