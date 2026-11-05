@@ -26,10 +26,9 @@ PARAMS = dict(
     bootstrap=True,
     class_weight=None,
     random_state=42,
-    # Single thread, so that the reported fit reproduces the setting stated in
-    # Supplementary Table S14. Results are unchanged: trees are independent and
-    # the seed is fixed, so n_jobs affects run time only.
-    n_jobs=1,
+    # All cores. The trees are independent and the seed is fixed, so n_jobs
+    # affects run time only, not the fitted forest or any reported result.
+    n_jobs=-1,
 )
 
 
