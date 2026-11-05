@@ -29,6 +29,21 @@ non-numeric entries.
 
 ---
 
+## Candidate predictor list
+
+The resampling scripts re-run the selection inside each resample, so they need to know which
+columns are candidates. Provide them as one name per line:
+
+```
+data/candidate_predictors.txt
+```
+
+If the file is absent, every column of the workbook except `outcome` is treated as a candidate,
+which is only correct when the workbook holds the analysis variables alone. Point the scripts at
+another location with `--candidates`.
+
+---
+
 ## Columns required by the R scripts
 
 `R/01_boruta.R` and `R/02_lasso.R` expect the **full** raw export: 69 candidate predictors plus

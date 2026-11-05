@@ -22,6 +22,11 @@ tuning and final model fitting reported in the paper. It does **not** contain pa
 | 2 | `R/02_lasso.R` | LASSO logistic regression, 10-fold cross-validation, variables retained at `lambda.1se` |
 | 3 | `python/grid_search/*.py` | Exhaustive grid search for 8 classifiers, stratified 10-fold CV, ranked by mean CV AUC |
 | 4 | `python/final_models/*.py` | Final models refit on the complete training set using the selected hyperparameters, then serialised to disk |
+| 5 | `python/evaluation/cross_validate.py` | Stratified 10-fold cross-validation of the final four-variable specification, fold assignment shared by all eight models |
+| 6 | `python/resampling/optimism_all8_reselect.py` | Harrell bootstrap with the two selectors re-run inside every resample; optimism and optimism-corrected AUROC for each of the eight models, plus a fixed-predictor arm for the paired comparison |
+| 7 | `python/resampling/nested_cv_selection.py` | Nested cross-validation (outer 10-fold × 5 repeats) that repeats the selection inside every training fold and records which fallback branch was taken |
+| 8 | `python/evaluation/recalibration.py` | Two-parameter logistic recalibration evaluated by 10-fold cross-validation inside the cohort, with percentile bootstrap intervals from repeating the whole procedure |
+| 9 | `python/evaluation/performance.py` | AUROC with DeLong standard error, paired DeLong, calibration slope and CITL, Brier and Brier skill, threshold-dependent metrics, percentile bootstrap |
 
 The intersection of the Boruta and LASSO results gave **four predictors**, measured within the
 first 72 h of ICU admission:
@@ -54,22 +59,37 @@ Regression, Support Vector Machine, Gaussian Naive Bayes.
 │   │   ├── logistic_regression_grid_search.py
 │   │   ├── random_forest_grid_search.py
 │   │   ├── svm_grid_search.py
-│   │   └── xgboost_grid_search.py
-│   └── final_models/
-│       ├── fit_catboost.py
-│       ├── fit_decision_tree.py
-│       ├── fit_gaussian_nb.py
-│       ├── fit_lightgbm.py
-│       ├── fit_logistic_regression.py
-│       ├── fit_random_forest.py
-│       ├── fit_svm.py
-│       └── fit_xgboost.py
+│   │   ├── xgboost_grid_search.py
+│   │   ├── xgboost_extended_grid.py     # 70-configuration extension (Supplementary File S5b)
+│   │   └── xgboost_extended_grid.csv    # its output, as supplied with the manuscript
+│   ├── final_models/
+│   │   ├── fit_catboost.py
+│   │   ├── fit_decision_tree.py
+│   │   ├── fit_gaussian_nb.py
+│   │   ├── fit_lightgbm.py
+│   │   ├── fit_logistic_regression.py
+│   │   ├── fit_random_forest.py
+│   │   ├── fit_svm.py
+│   │   └── fit_xgboost.py
+│   ├── evaluation/
+│   │   ├── performance.py          # AUROC/DeLong, calibration, Brier, threshold metrics, bootstrap
+│   │   ├── cross_validate.py       # step 5
+│   │   └── recalibration.py        # step 8
+│   └── resampling/
+│       ├── models.py               # the eight classifiers with their frozen hyperparameters
+│       ├── feature_selection.py    # Boruta + LASSO(lambda.1se) + fallback rule
+│       ├── optimism_all8_reselect.py  # step 6
+│       └── nested_cv_selection.py  # step 7
 ├── data/
 │   └── README.md              # required input format (data itself is not distributed)
 ├── requirements.txt
 ├── CITATION.cff
 └── LICENSE
 ```
+
+The extended XGBoost grid used in the response to comment 6 lives beside the other search scripts:
+`python/grid_search/xgboost_extended_grid.py` (70 configurations) and its output
+`python/grid_search/xgboost_extended_grid.csv`, which is the file supplied as Supplementary File S5b.
 
 ---
 
@@ -154,6 +174,46 @@ python python/final_models/fit_svm.py
 python python/final_models/fit_gaussian_nb.py
 ```
 
+### Step 4 — resampling, recalibration and performance evaluation
+
+These scripts are the implementation of Supplementary Table S14 (rows 5-13). They read the
+training cohort (and, for recalibration, a cohort file that already contains the predicted
+probability column) and write CSV output next to the script unless `--out` is given.
+
+```bash
+# 10-fold cross-validation of the final four-variable specification
+python python/evaluation/cross_validate.py --data data/training_set.xlsx
+
+# Harrell bootstrap with the selectors re-run inside each resample (whole development
+# procedure), and the fixed-predictor arm for the paired comparison
+python python/resampling/optimism_all8_reselect.py --data data/training_set.xlsx \
+    --arm reselect --n-boot 200
+python python/resampling/optimism_all8_reselect.py --data data/training_set.xlsx \
+    --arm fixed --n-boot 200
+
+# Nested cross-validation: selection repeated inside every training fold
+python python/resampling/nested_cv_selection.py --data data/training_set.xlsx
+
+# Two-parameter logistic recalibration, cross-validated, with bootstrap intervals
+python python/evaluation/recalibration.py --data external_with_predictions.csv \
+    --outcome outcome --p-col p
+
+# Metric library used by all of the above; running it prints a self-check
+python python/evaluation/performance.py
+```
+
+Timing: the bootstrap is dominated by re-running Boruta in each resample (roughly 1-3 minutes per
+resample at 500 trees on one core), so use `--n-jobs` to parallelise or `--n-boot` for a shorter run.
+For a wiring check, `--n-boot 5 --boruta-trees 50` finishes in about a minute.
+
+The predicted-probability column for `recalibration.py` is produced from the model bundle:
+
+```python
+import joblib, pandas as pd
+bundle = joblib.load("catboost_theta6_model.pkl")
+df["p"] = bundle["model"].predict_proba(df[bundle["features"]])[:, 1]
+```
+
 ---
 
 ## Outputs
@@ -164,6 +224,11 @@ python python/final_models/fit_gaussian_nb.py
 | `R/02_lasso.R` | console output: coefficients and selected variables at `lambda.min` / `lambda.1se` |
 | `python/grid_search/*.py` | `*_grid_search.csv` (full ranking), `*_grid_search_best.json` or `top10.csv` (best configuration), plus per-fold AUCs |
 | `python/final_models/*.py` | serialised model (`*.cbm`, `*.json`, `*.txt`, `*.joblib`) and console output with the fitted coefficients or tree counts |
+| `python/evaluation/cross_validate.py` | `results/cross_validation.csv` (per fold) and `results/cross_validation_summary.csv` |
+| `python/resampling/optimism_all8_reselect.py` | `results/optimism_all8.csv` (optimism, corrected AUROC, CI per model), `*_per_replicate.csv`, `*_run.json` |
+| `python/resampling/nested_cv_selection.py` | `results/nested_cv.csv` (per fold, with the fallback branch taken) and `results/nested_cv_summary.csv` |
+| `python/evaluation/recalibration.py` | `results/recalibration.csv` (original vs recalibrated, with bootstrap intervals) and `*_predictions.csv` |
+| `python/grid_search/xgboost_extended_grid.py` | `xgboost_extended_grid.csv` — 70 configurations, the file supplied as Supplementary File S5b |
 
 Generated files are written next to the script that produced them and are excluded from version
 control by `.gitignore`.
@@ -184,6 +249,11 @@ control by `.gitignore`.
 - **File naming.** Scripts are deliberately not named `catboost.py`, `xgboost.py` or `lightgbm.py`:
   such a file sits first on `sys.path` when run directly and would shadow the library of the same
   name. Keep the current suffixes if you rename anything.
+- **Fallback rule.** If a selection stage returns no variable, the Boruta-confirmed set is carried
+  forward unchanged; if Boruta itself confirms nothing, all candidate variables are used. The branch
+  taken is returned by `feature_selection.select_features` and counted by
+  `nested_cv_selection.py`. In the reported 50-fold run, only one branch occurred: 35 folds needed
+  no fallback and 15 used the Boruta-only set.
 - Results are sensitive to library versions, particularly CatBoost and scikit-learn. The versions in
   `requirements.txt` are the ones used for the manuscript.
 
