@@ -269,7 +269,7 @@ Released under the [MIT License](LICENSE).
 If you use this code, please cite the associated article and this archived release.
 
 - **DOI (all versions, recommended):** https://doi.org/10.5281/zenodo.23938386
-- **This release:** v1.0.2. The version-specific DOI for an individual release is listed on the
+- **This release:** v1.0.3. The version-specific DOI for an individual release is listed on the
   Zenodo record page; the concept DOI above always resolves to the newest release.
 
 BibTeX for the archived software:
@@ -281,7 +281,7 @@ BibTeX for the archived software:
                Requiring Invasive Mechanical Ventilation},
   year      = {2026},
   publisher = {Zenodo},
-  version   = {v1.0.2},
+  version   = {v1.0.3},
   doi       = {10.5281/zenodo.23938386},
   url       = {https://doi.org/10.5281/zenodo.23938386}
 }
