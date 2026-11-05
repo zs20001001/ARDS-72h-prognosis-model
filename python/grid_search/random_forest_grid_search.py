@@ -27,8 +27,10 @@ GRID = {
     "min_samples_leaf": [1, 2],
 }
 
+# n_jobs = 1 per fitted model, to match the single-thread setting stated in
+# Supplementary Table S14; the search over configurations is what runs in parallel.
 FIXED = dict(max_features=4, criterion="gini", bootstrap=True,
-             class_weight=None, random_state=42, n_jobs=-1)
+             class_weight=None, random_state=42, n_jobs=1)
 
 OUT_CSV = os.path.join(OUT_DIR, "random_forest_grid_search.csv")
 OUT_JSON = os.path.join(OUT_DIR, "random_forest_grid_search_best.json")

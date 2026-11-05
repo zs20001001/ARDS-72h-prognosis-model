@@ -29,7 +29,8 @@ tuning and final model fitting reported in the paper. It does **not** contain pa
 | 9 | `python/evaluation/performance.py` | AUROC with DeLong standard error, paired DeLong, calibration slope and CITL, Brier and Brier skill, threshold-dependent metrics, percentile bootstrap |
 
 The intersection of the Boruta and LASSO results gave **four predictors**, measured within the
-first 72 h of ICU admission:
+first 72 h after initiation of invasive ventilation (time zero is intubation; Day 1 is 0–24 h and
+Day 3 is 48–72 h):
 
 | Variable | Meaning |
 | :------- | :------ |
