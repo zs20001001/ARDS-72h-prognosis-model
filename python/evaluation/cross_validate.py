@@ -12,7 +12,7 @@ of the optimism of the whole development procedure.
 
 Usage
 -----
-    python cross_validate.py --data ../../data/training_set.xlsx
+    python cross_validate.py --data "../../data/training set.xlsx"
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data", type=Path,
-                    default=HERE.parents[1] / "data" / "training_set.xlsx")
+                    default=HERE.parents[1] / "data" / "training set.xlsx")
     ap.add_argument("--outcome", default="outcome")
     ap.add_argument("--features", nargs="*", default=FEATURES)
     ap.add_argument("--models", nargs="*", default=list(MODEL_ZOO))

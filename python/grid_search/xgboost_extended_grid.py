@@ -24,7 +24,7 @@ the model.
 
 Usage
 -----
-    python xgboost_extended_grid.py --data ../../data/training_set.xlsx \
+    python xgboost_extended_grid.py --data "../../data/training set.xlsx" \
         --out xgboost_extended_grid.csv
 """
 
@@ -51,7 +51,7 @@ DEPTHS = [3, 4]
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--data", type=Path, default=HERE.parents[1] / "data" / "training_set.xlsx")
+    ap.add_argument("--data", type=Path, default=HERE.parents[1] / "data" / "training set.xlsx")
     ap.add_argument("--out", type=Path, default=HERE / "xgboost_extended_grid.csv")
     args = ap.parse_args()
 

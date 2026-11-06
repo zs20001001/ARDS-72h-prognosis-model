@@ -23,8 +23,11 @@ Protocol
 
 Usage
 -----
-    python recalibration.py --data external_with_predictions.csv \
+    python recalibration.py --data "data/external validation set.xlsx" \
         --outcome outcome --p-col p --out results/recalibration.csv
+
+The same command with "data/internal validation set.xlsx" recalibrates the frozen model inside
+the internal validation cohort.
 
 The input needs one row per patient, the binary outcome and the predicted
 probability of the frozen model. To generate that column from the model bundle:

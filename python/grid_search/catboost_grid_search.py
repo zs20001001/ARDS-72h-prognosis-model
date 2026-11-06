@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(_HERE, "..", "..", "data")
-TRAIN = os.path.join(DATA_DIR, "training_set.xlsx")
+TRAIN = os.path.join(DATA_DIR, "training set.xlsx")
 # `peep` is day-1 PEEP as stored in the source table (renamed d1_peep in R/01_boruta.R).
 FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
 TARGET = "outcome"

@@ -36,9 +36,9 @@ full-cohort values, and the estimate is conditional on them (Table S14, row 6).
 
 Usage
 -----
-    python optimism_all8_reselect.py --data ../../data/training_set.xlsx \
+    python optimism_all8_reselect.py --data "../../data/training set.xlsx" \
         --n-boot 200 --arm reselect --out results/optimism_reselect.csv
-    python optimism_all8_reselect.py --data ../../data/training_set.xlsx \
+    python optimism_all8_reselect.py --data "../../data/training set.xlsx" \
         --n-boot 200 --arm oob --models CatBoost --out results/optimism_oob.csv
 
 Runtime: the selection step dominates. With BorutaPy at 500 trees, expect roughly
@@ -134,7 +134,7 @@ def one_resample(b: int, X, y, names, arm: str, seed: int, models, fixed_idx,
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data", type=Path,
-                    default=HERE.parents[1] / "data" / "training_set.xlsx")
+                    default=HERE.parents[1] / "data" / "training set.xlsx")
     ap.add_argument("--outcome", default="outcome")
     ap.add_argument("--candidates", type=Path,
                     default=HERE.parents[1] / "data" / "candidate_predictors.txt")

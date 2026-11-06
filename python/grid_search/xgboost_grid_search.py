@@ -11,7 +11,7 @@ from sklearn.model_selection import StratifiedKFold
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(_HERE, "..", "..", "data")
-TRAIN = os.path.join(DATA_DIR, "training_set.xlsx")
+TRAIN = os.path.join(DATA_DIR, "training set.xlsx")
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "xgboost_grid_search")
 

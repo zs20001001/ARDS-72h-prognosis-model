@@ -1,13 +1,20 @@
 # Input data
 
-The patient-level workbook is **not distributed** with this repository. De-identified data are
+The patient-level workbooks are **not distributed** with this repository. De-identified data are
 available from the corresponding author on reasonable request.
 
-Place the file here as:
+Place the three workbooks here as:
 
 ```
-data/training_set.xlsx
+data/training set.xlsx              # development cohort
+data/internal validation set.xlsx   # internal validation cohort
+data/external validation set.xlsx   # external validation cohort
 ```
+
+Only `training set.xlsx` is read by the feature-selection, tuning, fitting and resampling
+scripts. The two validation workbooks are read only when the frozen model is scored (step 4 of
+the main README, `python/evaluation/recalibration.py`); they must contain the four predictor
+columns and `outcome`, plus a `p` column holding the predicted probability of the frozen model.
 
 `pd.read_excel()` / `readxl::read_excel()` read the **first worksheet**, with one row per patient.
 

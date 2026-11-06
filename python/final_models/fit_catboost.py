@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from catboost import CatBoostClassifier
 
-TRAIN_PATH = Path(__file__).resolve().parents[2] / "data" / "training_set.xlsx"
+TRAIN_PATH = Path(__file__).resolve().parents[2] / "data" / "training set.xlsx"
 # `peep` is day-1 PEEP as stored in the source table (renamed d1_peep in R/01_boruta.R).
 FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
 TARGET = "outcome"

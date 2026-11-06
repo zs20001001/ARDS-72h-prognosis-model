@@ -13,7 +13,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR.parents[1] / "data"
-TRAIN_FILE = "training_set.xlsx"
+TRAIN_FILE = "training set.xlsx"
 
 TARGET = "outcome"
 # `peep` is day-1 PEEP as stored in the source table (renamed d1_peep in R/01_boruta.R).

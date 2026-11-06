@@ -100,13 +100,17 @@ Patient-level data are **not** included in this repository because of patient pr
 of the institutional ethics approval. De-identified data are available from the corresponding
 author on reasonable request.
 
-To run the code, place the input workbook at:
+To run the code, place the workbooks at:
 
 ```
-data/training_set.xlsx
+data/training set.xlsx              # development cohort, required
+data/internal validation set.xlsx   # internal validation cohort
+data/external validation set.xlsx   # external validation cohort
 ```
 
-The first worksheet must contain one row per patient with the columns listed in
+The development cohort is the only file read by the selection, tuning, fitting and resampling
+scripts; the two validation workbooks are read only when the frozen model is scored. Each first
+worksheet must contain one row per patient with the columns listed in
 [`data/README.md`](data/README.md). Absolute paths are not used anywhere; every script resolves the
 data file relative to its own location.
 
@@ -183,23 +187,26 @@ probability column) and write CSV output next to the script unless `--out` is gi
 
 ```bash
 # 10-fold cross-validation of the final four-variable specification
-python python/evaluation/cross_validate.py --data data/training_set.xlsx
+python python/evaluation/cross_validate.py --data "data/training set.xlsx"
 
 # Harrell bootstrap with the selectors re-run inside each resample (whole development
 # procedure), the fixed-predictor arm for the paired comparison, and the out-of-bag
 # variant reported in Table S8, section D
-python python/resampling/optimism_all8_reselect.py --data data/training_set.xlsx \
+python python/resampling/optimism_all8_reselect.py --data "data/training set.xlsx" \
     --arm reselect --n-boot 200
-python python/resampling/optimism_all8_reselect.py --data data/training_set.xlsx \
+python python/resampling/optimism_all8_reselect.py --data "data/training set.xlsx" \
     --arm fixed --n-boot 200
-python python/resampling/optimism_all8_reselect.py --data data/training_set.xlsx \
+python python/resampling/optimism_all8_reselect.py --data "data/training set.xlsx" \
     --arm oob --n-boot 200 --models CatBoost
 
 # Nested cross-validation: selection repeated inside every training fold
-python python/resampling/nested_cv_selection.py --data data/training_set.xlsx
+python python/resampling/nested_cv_selection.py --data "data/training set.xlsx"
 
-# Two-parameter logistic recalibration, cross-validated, with bootstrap intervals
-python python/evaluation/recalibration.py --data external_with_predictions.csv \
+# Two-parameter logistic recalibration, cross-validated, with bootstrap intervals.
+# The workbook is a validation cohort with the frozen model's probability added as column p
+python python/evaluation/recalibration.py --data "data/external validation set.xlsx" \
+    --outcome outcome --p-col p
+python python/evaluation/recalibration.py --data "data/internal validation set.xlsx" \
     --outcome outcome --p-col p
 
 # Metric library used by all of the above; running it prints a self-check

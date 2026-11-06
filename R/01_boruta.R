@@ -60,7 +60,7 @@ VARS <- c("age", "sex", "hypertension", "diabetes", "chronic_cardiac_disease",
           "d3_sofa", "d1_apache_ii", "d1_sofa", "delta_apache_ii",
           "delta_sofa", "prone_position")
 
-df <- as.data.frame(read_excel(file.path(BASE, "..", "data", "training_set.xlsx")))
+df <- as.data.frame(read_excel(file.path(BASE, "..", "data", "training set.xlsx")))
 nm  <- names(df)
 hit <- nm %in% names(OLD2NEW)
 nm[hit] <- unname(OLD2NEW[nm[hit]])

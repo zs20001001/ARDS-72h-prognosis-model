@@ -20,7 +20,7 @@ grid held at their full-cohort values.
 
 Usage
 -----
-    python nested_cv_selection.py --data ../../data/training_set.xlsx \
+    python nested_cv_selection.py --data "../../data/training set.xlsx" \
         --models CatBoost --out results/nested_cv.csv
 """
 
@@ -49,7 +49,7 @@ BASE_SEED = 42
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data", type=Path,
-                    default=HERE.parents[1] / "data" / "training_set.xlsx")
+                    default=HERE.parents[1] / "data" / "training set.xlsx")
     ap.add_argument("--outcome", default="outcome")
     ap.add_argument("--candidates", type=Path,
                     default=HERE.parents[1] / "data" / "candidate_predictors.txt")

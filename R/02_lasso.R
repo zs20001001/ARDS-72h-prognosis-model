@@ -40,7 +40,7 @@ OLD2NEW <- c(
   fuwowei_shifou = "prone_position"
 )
 
-f <- file.path(BASE, "..", "data", "training_set.xlsx")
+f <- file.path(BASE, "..", "data", "training set.xlsx")
 df <- read_excel(f)
 
 nm  <- names(df)
