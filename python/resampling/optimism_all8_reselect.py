@@ -13,7 +13,7 @@ original fit minus that mean:
     optimism     = mean_b optimism_b
     corrected    = AUROC(D, D) - optimism
 
-Two arms are available and are meant to be compared:
+Three arms are available and are meant to be compared:
 
 ``--arm reselect``  (default) the whole development procedure: selection and
                     fitting are both repeated inside the resample. This is the
@@ -21,8 +21,15 @@ Two arms are available and are meant to be compared:
 ``--arm fixed``     the predictor set is held at the four final variables and
                     only the classifier is refitted, which isolates the bias of
                     fitting from the bias of selection.
+``--arm oob``       the same selection-and-fitting step as ``reselect``, but the
+                    model is scored on the patients left out of its own resample
+                    instead of on the original cohort. Those patients took part in
+                    neither the selection nor the fitting, so the score is an
+                    out-of-bag rather than an apparent one, and the optimism
+                    carries the sampling noise of a test set of roughly 105
+                    patients (Table S8, section D, second variant).
 
-Both arms use the same resamples, so the per-replicate differences are paired.
+All three arms use the same resamples, so the per-replicate differences are paired.
 
 Imputation and hyperparameters are *not* repeated: both are held at their
 full-cohort values, and the estimate is conditional on them (Table S14, row 6).
@@ -31,6 +38,8 @@ Usage
 -----
     python optimism_all8_reselect.py --data ../../data/training_set.xlsx \
         --n-boot 200 --arm reselect --out results/optimism_reselect.csv
+    python optimism_all8_reselect.py --data ../../data/training_set.xlsx \
+        --n-boot 200 --arm oob --models CatBoost --out results/optimism_oob.csv
 
 Runtime: the selection step dominates. With BorutaPy at 500 trees, expect roughly
 1-3 min per resample on one core; use ``--n-jobs`` and ``--n-boot`` accordingly.
@@ -80,23 +89,31 @@ def load_cohort(path: Path, outcome: str, candidates_path: Path | None = None):
 
 
 def one_resample(b: int, X, y, names, arm: str, seed: int, models, fixed_idx,
-                 boruta_trees: int = 500):
-    """Select (reselect arm), refit every model, return per-model optimism."""
+                 boruta_trees: int = 500, select_seed: int = 500):
+    """Select (reselect / oob arms), refit every model, return per-model optimism."""
     rng = np.random.default_rng(seed + b)
     idx = rng.integers(0, len(y), len(y))
     Xb, yb = X[idx], y[idx]
 
-    if arm == "reselect":
-        cols, branch, n_boruta, n_lasso = select_features(Xb, yb, seed=seed,
+    if arm in ("reselect", "oob"):
+        cols, branch, n_boruta, n_lasso = select_features(Xb, yb, seed=select_seed,
                                                           n_trees=boruta_trees)
     else:
         cols, branch, n_boruta, n_lasso = fixed_idx, "fixed", np.nan, np.nan
+
+    # Patients that are in none of the resampled rows: the out-of-bag set.
+    if arm == "oob":
+        test_idx = np.setdiff1d(np.arange(len(y)), np.unique(idx))
+        if len(np.unique(y[test_idx])) < 2:
+            return []
+    else:
+        test_idx = np.arange(len(y))
 
     rows = []
     for name in models:
         model = fit_model(name, Xb[:, cols], yb)
         auc_boot = auroc(yb, positive_class_probability(model, Xb[:, cols]))
-        auc_orig = auroc(y, positive_class_probability(model, X[:, cols]))
+        auc_test = auroc(y[test_idx], positive_class_probability(model, X[test_idx][:, cols]))
         rows.append(
             dict(
                 replicate=b,
@@ -105,9 +122,10 @@ def one_resample(b: int, X, y, names, arm: str, seed: int, models, fixed_idx,
                 branch=branch,
                 n_boruta=n_boruta,
                 n_lasso=n_lasso,
+                n_test=len(test_idx),
                 auc_resample=auc_boot,
-                auc_original=auc_orig,
-                optimism=auc_boot - auc_orig,
+                auc_test=auc_test,
+                optimism=auc_boot - auc_test,
             )
         )
     return rows
@@ -120,9 +138,15 @@ def main():
     ap.add_argument("--outcome", default="outcome")
     ap.add_argument("--candidates", type=Path,
                     default=HERE.parents[1] / "data" / "candidate_predictors.txt")
-    ap.add_argument("--arm", choices=["reselect", "fixed"], default="reselect")
+    ap.add_argument("--arm", choices=["reselect", "fixed", "oob"], default="reselect")
     ap.add_argument("--n-boot", type=int, default=200)
-    ap.add_argument("--seed", type=int, default=1234)
+    ap.add_argument("--seed", type=int, default=499,
+                    help="resample b is drawn under the seed seed + b, so the "
+                         "default 499 gives seeds 500-699 and reproduces the "
+                         "published 200 resamples (Table S14, row 6)")
+    ap.add_argument("--select-seed", type=int, default=500,
+                    help="seed of the two selectors inside every resample; fixed "
+                         "at 500 in the published run (Table S14, row 6)")
     ap.add_argument("--n-jobs", type=int, default=1)
     ap.add_argument("--boruta-trees", type=int, default=500,
                     help="trees per Boruta forest; 500 is the published value, "
@@ -139,9 +163,9 @@ def main():
 
     # Apparent (resubstitution) AUROC of the original fit, one per model.
     apparent = {}
-    if args.arm == "reselect":
+    if args.arm in ("reselect", "oob"):
         cols, branch, n_boruta, n_lasso = select_features(
-            X, y, seed=args.seed, n_trees=args.boruta_trees)
+            X, y, seed=args.select_seed, n_trees=args.boruta_trees)
         print(f"full-cohort selection: {len(cols)} variables ({branch}); "
               f"Boruta {n_boruta}, LASSO {n_lasso}")
         if len(cols) == len(names):
@@ -161,7 +185,7 @@ def main():
 
         chunks = Parallel(n_jobs=args.n_jobs, backend="loky")(
             delayed(one_resample)(b, X, y, names, args.arm, args.seed, args.models,
-                                  fixed_idx, args.boruta_trees)
+                                  fixed_idx, args.boruta_trees, args.select_seed)
             for b in range(1, args.n_boot + 1)
         )
         rows = [r for chunk in chunks for r in chunk]
@@ -169,7 +193,7 @@ def main():
         rows = []
         for b in range(1, args.n_boot + 1):
             rows += one_resample(b, X, y, names, args.arm, args.seed, args.models,
-                                 fixed_idx, args.boruta_trees)
+                                 fixed_idx, args.boruta_trees, args.select_seed)
             if b % 10 == 0:
                 print(f"  {b}/{args.n_boot} resamples done", flush=True)
 
@@ -181,6 +205,10 @@ def main():
     )
     summary["apparent_auroc"] = summary["model"].map(apparent)
     summary["corrected_auroc"] = summary["apparent_auroc"] - summary["optimism"]
+    # Size of the scoring set: 284 in the reselect and fixed arms, the out-of-bag
+    # count (median about 105) in the oob arm.
+    summary["median_n_test"] = summary["model"].map(
+        per_rep.groupby("model")["n_test"].median())
     summary["ci_low"] = summary.apply(
         lambda r: np.percentile(
             per_rep.loc[per_rep.model == r["model"], "optimism"], 2.5), axis=1)
@@ -195,7 +223,10 @@ def main():
 
     runs = json.dumps(
         dict(data=str(args.data), arm=args.arm, n_boot=args.n_boot, seed=args.seed,
-             models=list(args.models), n=len(y), events=int(y.sum())),
+             select_seed=args.select_seed,
+             models=list(args.models), n=len(y), events=int(y.sum()),
+             scoring="out-of-bag patients of each resample" if args.arm == "oob"
+                     else "original training cohort"),
         ensure_ascii=False,
     )
     args.out.with_name(args.out.stem + "_run.json").write_text(runs, encoding="utf-8")

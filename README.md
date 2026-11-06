@@ -23,7 +23,7 @@ tuning and final model fitting reported in the paper. It does **not** contain pa
 | 3 | `python/grid_search/*.py` | Exhaustive grid search for 8 classifiers, stratified 10-fold CV, ranked by mean CV AUC |
 | 4 | `python/final_models/*.py` | Final models refit on the complete training set using the selected hyperparameters, then serialised to disk |
 | 5 | `python/evaluation/cross_validate.py` | Stratified 10-fold cross-validation of the final four-variable specification, fold assignment shared by all eight models |
-| 6 | `python/resampling/optimism_all8_reselect.py` | Harrell bootstrap with the two selectors re-run inside every resample; optimism and optimism-corrected AUROC for each of the eight models, plus a fixed-predictor arm for the paired comparison |
+| 6 | `python/resampling/optimism_all8_reselect.py` | Harrell bootstrap with the two selectors re-run inside every resample; optimism and optimism-corrected AUROC for each of the eight models, a fixed-predictor arm for the paired comparison, and an out-of-bag arm in which the scoring patients take part in neither the selection nor the fitting |
 | 7 | `python/resampling/nested_cv_selection.py` | Nested cross-validation (outer 10-fold × 5 repeats) that repeats the selection inside every training fold and records which fallback branch was taken |
 | 8 | `python/evaluation/recalibration.py` | Two-parameter logistic recalibration evaluated by 10-fold cross-validation inside the cohort, with percentile bootstrap intervals from repeating the whole procedure |
 | 9 | `python/evaluation/performance.py` | AUROC with DeLong standard error, paired DeLong, calibration slope and CITL, Brier and Brier skill, threshold-dependent metrics, percentile bootstrap |
@@ -186,11 +186,14 @@ probability column) and write CSV output next to the script unless `--out` is gi
 python python/evaluation/cross_validate.py --data data/training_set.xlsx
 
 # Harrell bootstrap with the selectors re-run inside each resample (whole development
-# procedure), and the fixed-predictor arm for the paired comparison
+# procedure), the fixed-predictor arm for the paired comparison, and the out-of-bag
+# variant reported in Table S8, section D
 python python/resampling/optimism_all8_reselect.py --data data/training_set.xlsx \
     --arm reselect --n-boot 200
 python python/resampling/optimism_all8_reselect.py --data data/training_set.xlsx \
     --arm fixed --n-boot 200
+python python/resampling/optimism_all8_reselect.py --data data/training_set.xlsx \
+    --arm oob --n-boot 200 --models CatBoost
 
 # Nested cross-validation: selection repeated inside every training fold
 python python/resampling/nested_cv_selection.py --data data/training_set.xlsx
