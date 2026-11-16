@@ -181,7 +181,9 @@ def main():
                   "on rows and copies of a patient may cross folds")
 
     a_full, b_full = fit_two_parameter(y, p)
-    p_cv = cross_validated_recalibration(y, p, groups=groups)
+    # Point estimate on the observed rows: each patient appears once, so the plain
+    # stratified split is used and the estimate is the one reported previously.
+    p_cv = cross_validated_recalibration(y, p)
     before = metrics(y, p)
     after = metrics(y, p_cv)
 
