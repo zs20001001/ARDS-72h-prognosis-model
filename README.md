@@ -50,7 +50,8 @@ Regression, Support Vector Machine, Gaussian Naive Bayes.
 .
 ├── R/
 │   ├── 01_boruta.R            # Boruta feature selection
-│   └── 02_lasso.R             # LASSO feature selection
+│   ├── 02_lasso.R             # LASSO feature selection
+│   └── 03_nested_cv_selection.R  # nested CV with the selectors re-run in every fold (v1.1.0)
 ├── python/
 │   ├── grid_search/
 │   │   ├── catboost_grid_search.py
@@ -80,7 +81,8 @@ Regression, Support Vector Machine, Gaussian Naive Bayes.
 │       ├── models.py               # the eight classifiers with their frozen hyperparameters
 │       ├── feature_selection.py    # Boruta + LASSO(lambda.1se) + fallback rule
 │       ├── optimism_all8_reselect.py  # step 6
-│       └── nested_cv_selection.py  # step 7
+│       ├── nested_cv_selection.py  # step 7, both arms, patient-level OOF predictions
+│       └── reproduce_table_s4f.py  # Supplementary Table S4f from the OOF predictions (v1.1.0)
 ├── data/
 │   └── README.md              # required input format (data itself is not distributed)
 ├── requirements.txt
@@ -199,15 +201,26 @@ python python/resampling/optimism_all8_reselect.py --data "data/training set.xls
 python python/resampling/optimism_all8_reselect.py --data "data/training set.xlsx" \
     --arm oob --n-boot 200 --models CatBoost
 
-# Nested cross-validation: selection repeated inside every training fold
-python python/resampling/nested_cv_selection.py --data "data/training set.xlsx"
+# Nested cross-validation: selection repeated inside every training fold.
+# --arm both runs the two rows of Table S4f in one pass and writes patient-level
+# out-of-fold predictions (nested_cv_oof.csv) next to the fold-level table.
+python python/resampling/nested_cv_selection.py --data "data/training set.xlsx" \
+    --arm both --models CatBoost --out results/nested_cv.csv
+# The R implementation of the same resampling procedure, with the selectors in R
+Rscript R/03_nested_cv_selection.R
+
+# Supplementary Table S4f: pooled AUROC, AUROC of the predictions averaged over the
+# five repeats, and the paired comparison of the two arms
+python python/resampling/reproduce_table_s4f.py --oof results/nested_cv_oof.csv \
+    --folds results/nested_cv.csv --model CatBoost --out results/table_s4f.csv
 
 # Two-parameter logistic recalibration, cross-validated, with bootstrap intervals.
-# The workbook is a validation cohort with the frozen model's probability added as column p
+# The workbook is a validation cohort with the frozen model's probability added as column p.
+# --group-col keeps every copy of a patient in the same fold inside a bootstrap replicate.
 python python/evaluation/recalibration.py --data "data/external validation set.xlsx" \
-    --outcome outcome --p-col p
+    --outcome outcome --p-col p --group-col patient_id
 python python/evaluation/recalibration.py --data "data/internal validation set.xlsx" \
-    --outcome outcome --p-col p
+    --outcome outcome --p-col p --group-col patient_id
 
 # Metric library used by all of the above; running it prints a self-check
 python python/evaluation/performance.py
@@ -246,6 +259,41 @@ control by `.gitignore`.
 
 ---
 
+## What changed in v1.1.0
+
+v1.1.0 addresses the three points raised about the public scripts. It does not change the reported
+estimates: no model, threshold or predictor definition was altered.
+
+1. **Patient-level out-of-fold predictions and the paired arm.** `nested_cv_selection.py` now keeps
+   one held-out probability per patient per repeat and fits the fixed four-predictor arm in the same
+   folds (`--arm both`). `reproduce_table_s4f.py` uses those predictions to compute the three
+   quantities of Supplementary Table S4f: the pooled AUROC per repeat (mean ± SD over repeats), the
+   AUROC of the predictions averaged over the repeats (with a percentile interval from resampling
+   patients), and the paired DeLong comparison of the two arms. v1.0.4 stored only the fifty
+   fold-level AUROCs, from which neither of the last two quantities can be obtained.
+2. **The R implementation of the resampling procedure.** `R/03_nested_cv_selection.R` repeats
+   Boruta and glmnet LASSO inside every training fold and writes the same OOF file, so the
+   selectors used for the reported results are available in the language in which they were run.
+   The Python selectors in `python/resampling/feature_selection.py` are an **approximate independent
+   reimplementation** of that procedure on BorutaPy and scikit-learn: the three settings are passed
+   explicitly, but the two libraries differ in how the shadow-feature importance is computed and in
+   how the glmnet regularisation path is spaced, so a fold need not yield an identical variable
+   set. The published numbers are those of the R run.
+3. **Bootstrap intervals grouped by patient.** In `python/evaluation/recalibration.py` a bootstrap
+   replicate contains copies of the same patient, and v1.0.4 split those rows with an ordinary
+   `StratifiedKFold`, so a copy could enter both the recalibration training folds and the evaluation
+   fold of the same replicate. The split is now made on the patient identifier
+   (`StratifiedGroupKFold`), which keeps every copy of a patient on one side. The cross-validated
+   point estimate is computed on the observed rows, where each patient appears once, and is
+   unchanged; only the intervals were regenerated.
+
+What the repository cannot reproduce: the three steps executed inside the closed-source DecisionLinnc
+interface (cohort assembly, variable mapping and multiple imputation) are described in Supplementary
+Table S14, and the manuscript states that limitation rather than claiming that every estimate is
+reproducible from this repository.
+
+---
+
 ## Notes and caveats
 
 - **Legacy column names.** The raw clinical export uses abbreviated legacy headers (`bai`, `jigan`,
@@ -279,7 +327,7 @@ Released under the [MIT License](LICENSE).
 If you use this code, please cite the associated article and this archived release.
 
 - **DOI (all versions, recommended):** https://doi.org/10.5281/zenodo.23938386
-- **This release:** v1.0.4. The version-specific DOI for an individual release is listed on the
+- **This release:** v1.1.0. The version-specific DOI for an individual release is listed on the
   Zenodo record page; the concept DOI above always resolves to the newest release.
 
 BibTeX for the archived software:
@@ -291,7 +339,7 @@ BibTeX for the archived software:
                Requiring Invasive Mechanical Ventilation},
   year      = {2026},
   publisher = {Zenodo},
-  version   = {v1.0.4},
+  version   = {v1.1.0},
   doi       = {10.5281/zenodo.23938386},
   url       = {https://doi.org/10.5281/zenodo.23938386}
 }

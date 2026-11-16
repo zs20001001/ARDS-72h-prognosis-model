@@ -21,10 +21,23 @@ Protocol
    step-2 procedure is repeated, so the interval carries the uncertainty of the
    recalibration itself and not only the sampling noise of the cohort.
 
+   A bootstrap resample necessarily contains copies of the same patient. The
+   fold split is therefore made on the patient identifier, not on the row: every
+   copy of a patient is kept in the same fold, so a copy can never enter both the
+   recalibration training folds and the evaluation fold of the same replicate.
+   This is the point raised in comment 6 of the third review; v1.0.4 split the
+   bootstrapped rows with an ordinary StratifiedKFold, which allowed exactly that
+   overlap. The point estimate is unchanged: it is computed on the observed rows,
+   where every patient appears once.
+
 Usage
 -----
     python recalibration.py --data "data/external validation set.xlsx" \
-        --outcome outcome --p-col p --out results/recalibration.csv
+        --outcome outcome --p-col p --group-col patient_id --out results/recalibration.csv
+
+``--group-col`` defaults to ``patient_id`` when the workbook has such a column
+(``subject_id`` and ``stay_id`` are also recognised); without one the script
+falls back to splitting rows and says so.
 
 The same command with "data/internal validation set.xlsx" recalibrates the frozen model inside
 the internal validation cohort.
@@ -59,6 +72,7 @@ N_SPLITS = 10
 SEED = 42
 N_BOOT = 2000
 BOOT_SEED = 7
+DEFAULT_GROUP_COLS = ("patient_id", "subject_id", "stay_id")
 
 
 def logit(p, eps: float = 1e-9):
@@ -92,15 +106,32 @@ def apply_two_parameter(a, b, p):
     return expit(a + b * logit(p))
 
 
-def cross_validated_recalibration(y, p, n_splits: int = N_SPLITS, seed: int = SEED):
-    """Out-of-fold recalibrated probabilities; the cohort is never scored in-sample."""
-    from sklearn.model_selection import StratifiedKFold
+def cross_validated_recalibration(y, p, n_splits: int = N_SPLITS, seed: int = SEED,
+                                  groups=None):
+    """Out-of-fold recalibrated probabilities; the cohort is never scored in-sample.
+
+    When ``groups`` is given, the split is made on those values rather than on
+    rows, so copies of one patient created by a bootstrap resample always land in
+    the same fold. Without ``groups`` the split is the plain stratified 10-fold
+    split of the observed cohort, where every patient appears once anyway.
+    """
+    from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 
     y = np.asarray(y).astype(int)
     p = np.asarray(p, dtype=float)
     out = np.empty_like(p)
-    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
-    for tr, te in skf.split(p.reshape(-1, 1), y):
+    if groups is None:
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+        splitter = skf.split(p.reshape(-1, 1), y)
+    else:
+        groups = np.asarray(groups)
+        try:
+            sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True,
+                                        random_state=seed)
+        except TypeError:  # sklearn < 1.0: no shuffle argument
+            sgkf = StratifiedGroupKFold(n_splits=n_splits)
+        splitter = sgkf.split(p.reshape(-1, 1), y, groups)
+    for tr, te in splitter:
         a, b = fit_two_parameter(y[tr], p[tr])
         out[te] = apply_two_parameter(a, b, p[te])
     return out
@@ -120,6 +151,9 @@ def main():
     ap.add_argument("--data", type=Path, required=True)
     ap.add_argument("--outcome", default="outcome")
     ap.add_argument("--p-col", default="p")
+    ap.add_argument("--group-col", default=None,
+                    help="patient identifier used for the fold split and the bootstrap; "
+                         "defaults to patient_id / subject_id / stay_id when present")
     ap.add_argument("--n-boot", type=int, default=N_BOOT)
     ap.add_argument("--out", type=Path, default=HERE / "results" / "recalibration.csv")
     args = ap.parse_args()
@@ -130,8 +164,24 @@ def main():
     y = pd.to_numeric(df[args.outcome], errors="coerce").astype(int).to_numpy()
     p = pd.to_numeric(df[args.p_col], errors="coerce").to_numpy(float)
 
+    group_col = args.group_col
+    if group_col is None:
+        group_col = next((c for c in DEFAULT_GROUP_COLS if c in df.columns), None)
+    if group_col and group_col in df.columns:
+        groups = df[group_col].astype(str).to_numpy()
+        repeated = len(groups) - len(np.unique(groups))
+        print(f"group column: {group_col} "
+              f"({len(np.unique(groups))} patients, {repeated} repeated rows)")
+    else:
+        groups = None
+        if group_col:
+            print(f"[warning] column {group_col!r} not found; splitting rows instead")
+        else:
+            print("[warning] no patient identifier column; the bootstrap split is made "
+                  "on rows and copies of a patient may cross folds")
+
     a_full, b_full = fit_two_parameter(y, p)
-    p_cv = cross_validated_recalibration(y, p)
+    p_cv = cross_validated_recalibration(y, p, groups=groups)
     before = metrics(y, p)
     after = metrics(y, p_cv)
 
@@ -151,7 +201,8 @@ def main():
         if yb.min() == yb.max():
             continue
         try:
-            p_cv_b = cross_validated_recalibration(yb, pb)
+            gb = groups[idx] if groups is not None else None
+            p_cv_b = cross_validated_recalibration(yb, pb, groups=gb)
             m = metrics(yb, p_cv_b)
         except (ValueError, np.linalg.LinAlgError):
             continue
