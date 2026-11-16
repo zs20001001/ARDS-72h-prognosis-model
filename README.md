@@ -278,7 +278,12 @@ estimates: no model, threshold or predictor definition was altered.
    reimplementation** of that procedure on BorutaPy and scikit-learn: the three settings are passed
    explicitly, but the two libraries differ in how the shadow-feature importance is computed and in
    how the glmnet regularisation path is spaced, so a fold need not yield an identical variable
-   set. The published numbers are those of the R run.
+   set. The published numbers are those of the R run. The script in this repository implements the
+   same protocol step for step but is not byte-identical to the version that produced Table S4f: a
+   fresh execution on the analysis data gives a fixed-arm pooled AUROC of 0.890 against the
+   published 0.895, and a re-selection contrast of +0.023, larger than the published +0.013 (see
+   the note under v1.1.1). The conclusion the comparison supports does not depend on that
+   difference, but the paired P value does.
 3. **Bootstrap intervals grouped by patient.** In `python/evaluation/recalibration.py` a bootstrap
    replicate contains copies of the same patient, and v1.0.4 split those rows with an ordinary
    `StratifiedKFold`, so a copy could enter both the recalibration training folds and the evaluation
