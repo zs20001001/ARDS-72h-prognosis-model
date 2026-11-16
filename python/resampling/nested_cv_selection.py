@@ -101,6 +101,9 @@ def main():
     ap.add_argument("--splits", type=int, default=N_SPLITS)
     ap.add_argument("--boruta-trees", type=int, default=500,
                     help="trees per Boruta forest; lower it only for a smoke test")
+    ap.add_argument("--jobs", type=int, default=1,
+                    help="cores used to build the trees of one forest; the result "
+                         "does not depend on it")
     ap.add_argument("--out", type=Path, default=HERE / "results" / "nested_cv.csv")
     args = ap.parse_args()
 
@@ -132,7 +135,8 @@ def main():
             selections = {}
             if "reselect" in arms:
                 selections["reselect"] = select_features(
-                    X[tr], y[tr], seed=seed, n_trees=args.boruta_trees)
+                    X[tr], y[tr], seed=seed, n_trees=args.boruta_trees,
+                    n_jobs=args.jobs)
             if "fixed" in arms:
                 selections["fixed"] = (fixed_cols, "fixed", len(fixed_cols), len(fixed_cols))
 

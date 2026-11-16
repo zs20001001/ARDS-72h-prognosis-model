@@ -41,13 +41,17 @@ NFOLD = 10
 LASSO_CS = np.logspace(-3, 0, 100)
 
 
-def boruta_confirmed(X, y, seed: int = 42, n_trees: int = BORUTA_TREES):
-    """Confirmed variables from BorutaPy; empty list when nothing is confirmed."""
+def boruta_confirmed(X, y, seed: int = 42, n_trees: int = BORUTA_TREES, n_jobs: int = 1):
+    """Confirmed variables from BorutaPy; empty list when nothing is confirmed.
+
+    ``n_jobs`` only sets how many cores build the trees of one forest. The trees
+    are seeded from ``random_state``, so the confirmed set does not depend on it.
+    """
     from boruta import BorutaPy
     from sklearn.ensemble import RandomForestClassifier
 
     forest = RandomForestClassifier(
-        n_estimators=n_trees, max_features="sqrt", n_jobs=1, random_state=seed
+        n_estimators=n_trees, max_features="sqrt", n_jobs=n_jobs, random_state=seed
     )
     selector = BorutaPy(
         forest,
@@ -113,7 +117,7 @@ def lasso_1se(X, y, seed: int = 42, nfold: int = NFOLD, cs=LASSO_CS):
     return [int(i) for i in np.where(np.abs(model.coef_.ravel()) > 1e-8)[0]]
 
 
-def select_features(X, y, seed: int = 42, n_trees: int = BORUTA_TREES):
+def select_features(X, y, seed: int = 42, n_trees: int = BORUTA_TREES, n_jobs: int = 1):
     """Run both stages and return the predictor set actually used for fitting.
 
     Returns
@@ -127,7 +131,7 @@ def select_features(X, y, seed: int = 42, n_trees: int = BORUTA_TREES):
     n_boruta, n_lasso : int
         Size of each stage's set, before the fallback.
     """
-    boruta = boruta_confirmed(X, y, seed=seed, n_trees=n_trees)
+    boruta = boruta_confirmed(X, y, seed=seed, n_trees=n_trees, n_jobs=n_jobs)
     lasso = lasso_1se(X, y, seed=seed)
 
     both = sorted(set(boruta) & set(lasso))

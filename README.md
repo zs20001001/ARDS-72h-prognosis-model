@@ -287,6 +287,22 @@ estimates: no model, threshold or predictor definition was altered.
    point estimate is computed on the observed rows, where each patient appears once, and is
    unchanged; only the intervals were regenerated.
 
+## What changed in v1.1.1
+
+Two defects found when the scripts were run end to end on the clinical data. Neither changes a
+reported point estimate.
+
+1. **The R resampling script did not parse.** `R/03_nested_cv_selection.R` wrote the repeat number
+   into a column named `repeat`, which is a reserved word in R, so the script stopped with
+   `unexpected '='` before running a single fold. The column is now built as `repeat_id` and renamed
+   to `repeat` after the rows are bound, so the CSV keeps the same columns as the Python output.
+2. **The bootstrap in `recalibration.py` now always groups by patient.** The v1.1.0 text above
+   described the grouped split, but the grouping was only applied when the workbook carried a
+   patient-identifier column; without one, a resampled patient could still enter both the fitting
+   folds and the scored fold, which made the intervals too narrow (external slope 0.92-0.98 rather
+   than 0.83-0.96). The row index is now used as the identifier when the workbook has none, and the
+   intervals match the values reported in Table S11D.
+
 What the repository cannot reproduce: the three steps executed inside the closed-source DecisionLinnc
 interface (cohort assembly, variable mapping and multiple imputation) are described in Supplementary
 Table S14, and the manuscript states that limitation rather than claiming that every estimate is

@@ -175,10 +175,11 @@ def main():
     else:
         groups = None
         if group_col:
-            print(f"[warning] column {group_col!r} not found; splitting rows instead")
+            print(f"[warning] column {group_col!r} not found; the row index is used as "
+                  "the patient identifier")
         else:
-            print("[warning] no patient identifier column; the bootstrap split is made "
-                  "on rows and copies of a patient may cross folds")
+            print("no patient identifier column; the row index is used as the identifier, "
+                  "so the copies of a patient created by the bootstrap stay in one fold")
 
     a_full, b_full = fit_two_parameter(y, p)
     # Point estimate on the observed rows: each patient appears once, so the plain
@@ -195,15 +196,20 @@ def main():
         print("%-22s %8.4f %10.4f" % (key, before[key], after[key]))
 
     # Bootstrap: the 10-fold recalibration is repeated inside every resample.
+    # Copies of one patient created by the resample must not be split across the
+    # folds that fit and the folds that are scored, or the interval is too narrow
+    # (v1.1.1). When the workbook has no identifier, the row index is the
+    # identifier, so the identity of a resampled row is tracked through ``idx``.
     rng = np.random.default_rng(BOOT_SEED)
     draws = {k: [] for k in ("auroc", "brier", "slope", "citl")}
+    row_id = np.arange(len(y))
     for _ in range(args.n_boot):
         idx = rng.integers(0, len(y), len(y))
         yb, pb = y[idx], p[idx]
         if yb.min() == yb.max():
             continue
         try:
-            gb = groups[idx] if groups is not None else None
+            gb = groups[idx] if groups is not None else row_id[idx]
             p_cv_b = cross_validated_recalibration(yb, pb, groups=gb)
             m = metrics(yb, p_cv_b)
         except (ValueError, np.linalg.LinAlgError):

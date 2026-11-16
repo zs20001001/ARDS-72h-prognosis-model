@@ -206,14 +206,14 @@ for (r in seq_len(N_REPEATS)) {
       cols <- arms[[arm]]$cols
       p <- fit_predict(X[tr, cols, drop = FALSE], y[tr], X[te, cols, drop = FALSE])
       fold_rows[[length(fold_rows) + 1L]] <- data.frame(
-        arm = arm, repeat = r, fold = k, model = "CatBoost",
+        arm = arm, repeat_id = r, fold = k, model = "CatBoost",
         n_train = length(tr), n_test = length(te), n_predictors = length(cols),
         branch = arms[[arm]]$branch, n_boruta = arms[[arm]]$nb,
         n_lasso = arms[[arm]]$nl,
         auroc = auc_rank(y[te], as.numeric(p))
       )
       oof_rows[[length(oof_rows) + 1L]] <- data.frame(
-        arm = arm, model = "CatBoost", repeat = r, fold = k,
+        arm = arm, model = "CatBoost", repeat_id = r, fold = k,
         patient_id = PID[te], y = y[te], p = as.numeric(p)
       )
     }
@@ -225,6 +225,10 @@ for (r in seq_len(N_REPEATS)) {
 
 per_fold <- do.call(rbind, fold_rows)
 oof <- do.call(rbind, oof_rows)
+# ``repeat`` is a reserved word in R, so the column is built as repeat_id and
+# renamed here; the CSV then has the same columns as the Python script's output.
+names(per_fold)[names(per_fold) == "repeat_id"] <- "repeat"
+names(oof)[names(oof) == "repeat_id"] <- "repeat"
 
 summary_tbl <- aggregate(auroc ~ arm + model, data = per_fold,
                          FUN = function(v) c(mean = mean(v), sd = sd(v), n = length(v)))
