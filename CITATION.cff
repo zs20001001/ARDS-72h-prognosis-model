@@ -10,8 +10,8 @@ authors:
 repository-code: "https://github.com/zs20001001/ARDS-72h-prognosis-model"
 license: MIT
 doi: "10.5281/zenodo.23938386"
-version: 1.1.0
-date-released: "2026-11-16"
+version: 1.1.1
+date-released: "2026-11-17"
 keywords:
   - acute respiratory distress syndrome
   - invasive mechanical ventilation
