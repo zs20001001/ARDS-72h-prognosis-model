@@ -278,12 +278,13 @@ estimates: no model, threshold or predictor definition was altered.
    reimplementation** of that procedure on BorutaPy and scikit-learn: the three settings are passed
    explicitly, but the two libraries differ in how the shadow-feature importance is computed and in
    how the glmnet regularisation path is spaced, so a fold need not yield an identical variable
-   set. The published numbers are those of the R run. The script in this repository implements the
-   same protocol step for step but is not byte-identical to the version that produced Table S4f: a
-   fresh execution on the analysis data gives a fixed-arm pooled AUROC of 0.890 against the
-   published 0.895, and a re-selection contrast of +0.023, larger than the published +0.013 (see
-   the note under v1.1.1). The conclusion the comparison supports does not depend on that
-   difference, but the paired P value does.
+   set. Supplementary Table S4f reports the Python implementation, because that is the
+   implementation behind the deployed model; its note also gives the same table computed from the R
+   execution (0.890 and 0.899 for the two arms, a contrast of +0.023, 95% CI +0.006 to +0.041,
+   P = 0.012). A fresh run of the script in this repository reproduces those R numbers, not the
+   published 0.891 and 0.883 (+0.0020). The sign of a contrast this small depends on that choice of
+   implementation, which is why the manuscript states the result as the absence of a consistent
+   gain over the fixed four predictors rather than as a null result.
 3. **Bootstrap intervals grouped by patient.** In `python/evaluation/recalibration.py` a bootstrap
    replicate contains copies of the same patient, and v1.0.4 split those rows with an ordinary
    `StratifiedKFold`, so a copy could enter both the recalibration training folds and the evaluation
@@ -294,8 +295,8 @@ estimates: no model, threshold or predictor definition was altered.
 
 ## What changed in v1.1.1
 
-Two defects found when the scripts were run end to end on the clinical data. Neither changes a
-reported point estimate.
+Two defects found when the scripts were run end to end on the clinical data, and one clarification
+of what a fresh run reproduces. Neither defect changes a reported point estimate.
 
 1. **The R resampling script did not parse.** `R/03_nested_cv_selection.R` wrote the repeat number
    into a column named `repeat`, which is a reserved word in R, so the script stopped with
@@ -307,6 +308,10 @@ reported point estimate.
    folds and the scored fold, which made the intervals too narrow (external slope 0.92-0.98 rather
    than 0.83-0.96). The row index is now used as the identifier when the workbook has none, and the
    intervals match the values reported in Table S11D.
+3. **The replication note now names both sets of numbers.** The paragraph on the R implementation
+   gives the values a fresh run of the released script produces and the values Supplementary
+   Table S4f reports, so that a reader who re-runs the script can tell which of the two is in front
+   of them.
 
 What the repository cannot reproduce: the three steps executed inside the closed-source DecisionLinnc
 interface (cohort assembly, variable mapping and multiple imputation) are described in Supplementary
