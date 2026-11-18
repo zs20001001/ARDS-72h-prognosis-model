@@ -131,7 +131,10 @@ def predictor_counts(folds_path, model: str):
         return None
     per_fold = d.drop_duplicates(["repeat", "fold"])
     n = per_fold["n_predictors"]
-    return int(np.median(n)), int(n.min()), int(n.max())
+    # 50 folds give a median on the half-integer grid; ``int`` would truncate 8.5
+    # to 8 and print a value that disagrees with the table (v1.1.2).
+    median_label = f"{float(np.median(n)):g}"
+    return median_label, int(n.min()), int(n.max())
 
 
 def fmt(value: float, digits: int = 4) -> str:

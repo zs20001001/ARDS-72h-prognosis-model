@@ -318,6 +318,19 @@ interface (cohort assembly, variable mapping and multiple imputation) are descri
 Table S14, and the manuscript states that limitation rather than claiming that every estimate is
 reproducible from this repository.
 
+## What changed in v1.1.2
+
+One reporting defect, found by recomputing Table S4f from a fresh run of the released scripts. No
+estimate changes.
+
+**The per-fold predictor count was truncated.** `reproduce_table_s4f.py` summarised the number of
+predictors retained inside a fold with `int(np.median(n))`. Fifty folds give a median on the
+half-integer grid, so 8.5 was truncated to 8, and the script printed `8 (4-10)` for a table that
+reports `8.5 (4-10)`. The median is now formatted as a number rather than cast to an integer, so the
+cell the script prints is the cell in the table. The pooled AUROC, the averaged-prediction AUROC and
+the paired comparison are unaffected, and the regenerated `table_s4f` is identical to the published
+one in every field except that cell.
+
 ---
 
 ## Notes and caveats
@@ -353,7 +366,7 @@ Released under the [MIT License](LICENSE).
 If you use this code, please cite the associated article and this archived release.
 
 - **DOI (all versions, recommended):** https://doi.org/10.5281/zenodo.23938386
-- **This release:** v1.1.0. The version-specific DOI for an individual release is listed on the
+- **This release:** v1.1.2. The version-specific DOI for an individual release is listed on the
   Zenodo record page; the concept DOI above always resolves to the newest release.
 
 BibTeX for the archived software:
@@ -365,7 +378,7 @@ BibTeX for the archived software:
                Requiring Invasive Mechanical Ventilation},
   year      = {2026},
   publisher = {Zenodo},
-  version   = {v1.1.0},
+  version   = {v1.1.2},
   doi       = {10.5281/zenodo.23938386},
   url       = {https://doi.org/10.5281/zenodo.23938386}
 }
