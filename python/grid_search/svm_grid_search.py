@@ -19,7 +19,7 @@ TRAIN = os.path.join(DATA_DIR, "training set.xlsx")
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # `peep` is day-1 PEEP as stored in the source table (renamed d1_peep in R/01_boruta.R).
-FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
+FEATURES = ["peep", "d3_sofa", "d3_lac", "d3_a_ado2"]
 TARGET = "outcome"
 
 C_RANGE = (0.1, 10.0)

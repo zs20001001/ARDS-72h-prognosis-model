@@ -17,7 +17,7 @@ TRAIN_FILE = "training set.xlsx"
 
 TARGET = "outcome"
 # `peep` is day-1 PEEP as stored in the source table (renamed d1_peep in R/01_boruta.R).
-FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
+FEATURES = ["peep", "d3_sofa", "d3_lac", "d3_a_ado2"]
 
 RANGE = {
     "criterion": ["entropy"],

@@ -24,7 +24,7 @@ N_POINTS = 20
 
 LABEL = "outcome"
 # `peep` is day-1 PEEP as stored in the source table (renamed d1_peep in R/01_boruta.R).
-FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
+FEATURES = ["peep", "d3_sofa", "d3_lac", "d3_a_ado2"]
 
 N_SPLITS = 10
 CV_SEED = 42

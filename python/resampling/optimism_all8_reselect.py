@@ -65,7 +65,7 @@ from models import MODEL_ZOO, fit_model, positive_class_probability  # noqa: E40
 from performance import auroc  # noqa: E402
 from feature_selection import select_features  # noqa: E402
 
-FIXED_FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
+FIXED_FEATURES = ["peep", "d3_sofa", "d3_lac", "d3_a_ado2"]
 
 
 def load_cohort(path: Path, outcome: str, candidates_path: Path | None = None):

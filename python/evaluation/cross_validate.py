@@ -33,7 +33,7 @@ from performance import auroc  # noqa: E402
 
 N_SPLITS = 10
 SEED = 42
-FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
+FEATURES = ["peep", "d3_sofa", "d3_lac", "d3_a_ado2"]
 
 
 def main():

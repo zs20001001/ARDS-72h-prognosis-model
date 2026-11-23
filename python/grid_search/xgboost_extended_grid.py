@@ -39,7 +39,7 @@ import xgboost as xgb
 from sklearn.model_selection import StratifiedKFold
 
 HERE = Path(__file__).resolve().parent
-FEATURES = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
+FEATURES = ["peep", "d3_sofa", "d3_lac", "d3_a_ado2"]
 OUTCOME = "outcome"
 SEED = 42
 N_SPLITS = 10

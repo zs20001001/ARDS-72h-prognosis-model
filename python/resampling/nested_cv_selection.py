@@ -74,7 +74,7 @@ N_SPLITS = 10
 N_REPEATS = 5
 BASE_SEED = 42
 
-FIXED_PREDICTORS = ["d3_a_ado2", "peep", "d3_sofa", "d3_lac"]
+FIXED_PREDICTORS = ["peep", "d3_sofa", "d3_lac", "d3_a_ado2"]
 ID_CANDIDATES = ("patient_id", "subject_id", "stay_id", "id", "pid")
 
 
