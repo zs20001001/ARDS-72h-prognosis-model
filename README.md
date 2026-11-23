@@ -318,6 +318,24 @@ interface (cohort assembly, variable mapping and multiple imputation) are descri
 Table S14, and the manuscript states that limitation rather than claiming that every estimate is
 reproducible from this repository.
 
+## What changed in v1.1.3
+
+The predictor order in the scripts now matches the order behind the estimates the paper reports. No
+estimate, patient, predictor definition or hyperparameter changes.
+
+**The four predictors are listed as `peep`, `d3_sofa`, `d3_lac`, `d3_a_ado2`.** XGBoost sets
+`colsample_bytree = 0.90`, so with four predictors each of its two trees draws three columns, and
+which three are drawn depends on the column positions rather than on the variable names. The previous
+order, with `d3_a_ado2` first, was equally valid in itself but returned a different fit: 0.7959
+internal and 0.7432 external, against 0.8080 and 0.7131 with the order used here. A fresh run of the
+released scripts now returns the tabulated values for all eight algorithms. The other seven are
+invariant to column order: CatBoost draws every column, and the remaining learners either use all
+four predictors at each split or are order-blind.
+
+**`xgboost_extended_grid.csv` is unchanged.** A fresh run reproduces its six columns cell for cell,
+and the best configuration remains learning rate 0.30, 5 rounds, depth 4, mean CV AUROC 0.9189
+(SD 0.0639).
+
 ## What changed in v1.1.2
 
 One reporting defect, found by recomputing Table S4f from a fresh run of the released scripts. No
@@ -366,8 +384,8 @@ Released under the [MIT License](LICENSE).
 If you use this code, please cite the associated article and this archived release.
 
 - **DOI (all versions, recommended):** https://doi.org/10.5281/zenodo.23938386
-- **This release:** v1.1.2. The version-specific DOI for an individual release is listed on the
-  Zenodo record page; the concept DOI above always resolves to the newest release.
+- **This release:** v1.1.3, archived as https://doi.org/10.5281/zenodo.24458739. The concept DOI
+  above always resolves to the newest release.
 
 BibTeX for the archived software:
 
@@ -378,9 +396,9 @@ BibTeX for the archived software:
                Requiring Invasive Mechanical Ventilation},
   year      = {2026},
   publisher = {Zenodo},
-  version   = {v1.1.2},
-  doi       = {10.5281/zenodo.23938386},
-  url       = {https://doi.org/10.5281/zenodo.23938386}
+  version   = {v1.1.3},
+  doi       = {10.5281/zenodo.24458739},
+  url       = {https://doi.org/10.5281/zenodo.24458739}
 }
 ```
 
